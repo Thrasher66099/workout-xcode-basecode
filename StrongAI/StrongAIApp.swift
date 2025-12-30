@@ -1,32 +1,38 @@
-//
-//  StrongAIApp.swift
-//  StrongAI
-//
-//  Created by Kaleb Phillips  on 12/12/25.
-//
-
 import SwiftUI
 import SwiftData
 
 @main
 struct StrongAIApp: App {
-    var sharedModelContainer: ModelContainer = {
-        let schema = Schema([
-            Item.self,
-        ])
-        let modelConfiguration = ModelConfiguration(schema: schema, isStoredInMemoryOnly: false)
-
+    let container: ModelContainer
+    
+    init() {
         do {
-            return try ModelContainer(for: schema, configurations: [modelConfiguration])
+            let schema = Schema([
+                Exercise.self,
+                WorkoutSession.self,
+                WorkoutSet.self,
+                Routine.self,
+                WidgetConfiguration.self,
+                MeasurementLog.self,
+                UserProfile.self
+            ])
+            container = try ModelContainer(for: schema)
+            
+            let modelContainer = container
+            // Seed Data
+            Task { @MainActor in
+                DataSeeder.seedExercises(modelContext: modelContainer.mainContext)
+            }
         } catch {
             fatalError("Could not create ModelContainer: \(error)")
         }
-    }()
-
+    }
+    
     var body: some Scene {
         WindowGroup {
             ContentView()
+                .preferredColorScheme(.dark) // Force Dark Mode
         }
-        .modelContainer(sharedModelContainer)
+        .modelContainer(container)
     }
 }
